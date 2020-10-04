@@ -11,15 +11,6 @@ struct tree
     struct tree *right;
 };
 
-char *inword(char *s, int size)
-{
-    char *p;
-    p = (char *)malloc(size+1);
-    if (p != NULL)
-        strcpy(p, s);
-    return(p);
-}
-
 struct tree *addnode (struct tree *T, char *w, int size, int *maxN)
 {
     int comp;
@@ -44,22 +35,22 @@ struct tree *addnode (struct tree *T, char *w, int size, int *maxN)
     return T;
 }
 
-void printree (struct tree *T, int i, double freq)
+void printree (struct tree *T, int i, double freq, FILE *fout)
 {
     if (T != NULL)
     {
-        printree (T -> left, i, freq);
+        printree (T -> left, i, freq, fout);
         if (i == T -> number)
-            printf("%s  %d  %6f\n", T -> word, i, freq);
-        printree (T -> right, i, freq);    
+            fprintf(fout, "%s  %d  %6f\n", T -> word, i, freq);
+        printree (T -> right, i, freq, fout);    
     }
 }
 
-void printbynumber (struct tree *T, int *maxN, int wholeN)
+void printbynumber (struct tree *T, int *maxN, int wholeN, FILE *fout)
 {
     int i;
     for (i=(*maxN); i>=1; i--)
-        printree(T,i,(double)i/wholeN);
+        printree(T,i,(double)i/wholeN, fout);
 }
 
 void freetree (struct tree *T)
@@ -73,36 +64,47 @@ void freetree (struct tree *T)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     struct tree *T=NULL;
-    char* w=NULL;
-    int c;
+    char* w = NULL;
+    char c;
     int size = 0, wholeN = 0;
     int maxN = 0;
-    
-    while ((c=getchar()) != EOF)
+    FILE *fin,*fout;
+
+    printf("%d\n", argc);
+    ++argv;
+    if ((fin = fopen(*++argv, "r")) == NULL) 
+        {printf("%s\n", "Не могу открыть первый файл"); return(1);}   
+    ++argv;
+    if ((fout = fopen(*++argv, "w")) == NULL)        
+        {printf("%s\n", "Не могу открыть второй файл"); return(1);} 
+
+    w = malloc(1);
+    while ((c = getc(fin)) != EOF)
     {
-        w = malloc(1);
-        while (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= 'а') && (c <= 'я')) || ((c >= 'А') && (c <= 'Я')))
+        while (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')))
         {
             w[size] = c;
             size++;
             w = realloc(w, size+1);               
-            c = getchar();
+            c = getc(fin);
         }
         if (size>0) 
         {
             T = addnode(T,w,size,&maxN); 
-            size=0;    free(w);
+            size=0;    
+            free(w);     
+            w = malloc(1);
             wholeN++;
         }
     }
     if (w != NULL) free(w);
 
-    printf("\n%s\n","----- start of the print:");
-    printbynumber(T,&maxN,wholeN);
-    printf("\n%s\n","----- end of the print:");
+    printf("%s\n","----- start of the print:");
+    printbynumber(T, &maxN, wholeN, fout);
+    printf("%s\n","----- end of the print:");
     freetree(T);
 
     return(0);
