@@ -17,25 +17,26 @@ char *inword(char *s, int size)
     p = (char *)malloc(size+1);
     if (p != NULL)
         strcpy(p, s);
-    return p;
+    return(p);
 }
 
 struct tree *addnode (struct tree *T, char *w, int size, int *maxN)
 {
-    int cond;
+    int comp;
     if (T==NULL)    
     {
         T = (struct tree *)malloc(sizeof(struct tree));
-        T -> word = inword(w,size);
+        T -> word = (char *)malloc(size+1);
+        strcpy (T -> word, w);
         T -> number = 1;
         T -> left = T -> right = NULL;
         (*maxN)=1;
     }
-    else if ((cond = strcmp(w, T -> word)) == 0)
+    else if ((comp = strcmp(w, T -> word)) == 0)
     {
         T -> number++;
     }
-    else if (cond < 0)
+    else if (comp < 0)
         T -> left = addnode(T -> left, w, size, maxN);
     else
         T -> right = addnode(T -> right, w, size, maxN);
@@ -61,18 +62,29 @@ void printbynumber (struct tree *T, int *maxN, int wholeN)
         printree(T,i,(double)i/wholeN);
 }
 
+void freetree (struct tree *T)
+{
+    if (T != NULL)
+    {
+        freetree (T -> left);
+        freetree (T -> right);
+        free (T -> word); 
+        free (T);
+    }
+}
+
 int main()
 {
     struct tree *T=NULL;
     char* w=NULL;
-    char c;
+    int c;
     int size = 0, wholeN = 0;
     int maxN = 0;
     
     while ((c=getchar()) != EOF)
     {
         w = malloc(1);
-        while ((c != '\n') && (c != EOF) && (c != ' ')) // && (c != '.') && (c != ',') && (c != '-') && (c != ':'))
+        while (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= 'а') && (c <= 'я')) || ((c >= 'А') && (c <= 'Я')))
         {
             w[size] = c;
             size++;
@@ -86,9 +98,12 @@ int main()
             wholeN++;
         }
     }
+    if (w != NULL) free(w);
+
     printf("\n%s\n","----- start of the print:");
     printbynumber(T,&maxN,wholeN);
     printf("\n%s\n","----- end of the print:");
+    freetree(T);
 
     return(0);
 }
