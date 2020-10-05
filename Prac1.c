@@ -75,11 +75,22 @@ int main(int argc, char *argv[])
 
     printf("%d\n", argc);
     ++argv;
-    if ((fin = fopen(*++argv, "r")) == NULL) 
-        {printf("%s\n", "Не могу открыть первый файл"); return(1);}   
-    ++argv;
-    if ((fout = fopen(*++argv, "w")) == NULL)        
-        {printf("%s\n", "Не могу открыть второй файл"); return(1);} 
+
+    if ((*argv != 0) && (strcmp("-i",*argv) == 0))
+    {
+        if ((fin = fopen(*++argv, "r")) == NULL) 
+            {printf("%s\n", "Unable to open input file"); return(1);}  
+        ++argv;
+    } 
+    else fin = stdin;
+
+    if ((*argv != 0) && (strcmp("-o",*argv) == 0))
+    {
+        if ((fout = fopen(*++argv, "w")) == NULL) 
+            {printf("%s\n", "Unable to open output file"); return(1);} 
+        ++argv; 
+    } 
+    else fout = stdout;
 
     w = malloc(1);
     while ((c = getc(fin)) != EOF)
@@ -106,6 +117,8 @@ int main(int argc, char *argv[])
     printbynumber(T, &maxN, wholeN, fout);
     printf("%s\n","----- end of the print:");
     freetree(T);
+    fclose(fin);
+    fclose(fout);
 
     return(0);
 }
