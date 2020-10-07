@@ -73,7 +73,6 @@ int main(int argc, char *argv[])
     int maxN = 0;
     FILE *fin,*fout;
 
-    printf("%d\n", argc);
     ++argv;
 
     if ((*argv != 0) && (strcmp("-i",*argv) == 0))
@@ -94,7 +93,7 @@ int main(int argc, char *argv[])
 
     w = malloc(1);
     while ((c = getc(fin)) != EOF)
-    {
+    {      
         while (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')))
         {
             w[size] = c;
@@ -110,12 +109,21 @@ int main(int argc, char *argv[])
             w = malloc(1);
             wholeN++;
         }
+        if ((c == '.') || (c == ',') || (c == ';') || (c == '!') || (c == '?') || (c == ':'))
+        {
+            w[size] = c;        
+            T = addnode(T,w,1,&maxN); 
+            size=0;    
+            free(w);     
+            w = malloc(1);
+            wholeN++;           
+        }   
     }
     if (w != NULL) free(w);
 
-    printf("%s\n","----- start of the print:");
+    printf("\t%s\n","Printing starts...");
     printbynumber(T, &maxN, wholeN, fout);
-    printf("%s\n","----- end of the print:");
+    printf("\t%s\n","Printing ends.");
     freetree(T);
     fclose(fin);
     fclose(fout);
