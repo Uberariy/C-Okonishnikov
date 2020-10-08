@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
     } 
     else fout = stdout;
 
-    w = malloc(1);
+    w = malloc(2);
     while ((c = getc(fin)) != EOF)
     {      
         while (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')))
@@ -103,19 +103,23 @@ int main(int argc, char *argv[])
         }
         if (size>0) 
         {
+            w[size] = '\0';
             T = addnode(T,w,size,&maxN); 
             size=0;    
             free(w);     
-            w = malloc(1);
+            w = malloc(2);
             wholeN++;
         }
         if ((c == '.') || (c == ',') || (c == ';') || (c == '!') || (c == '?') || (c == ':'))
         {
-            w[size] = c;        
+            w[size] = c;
+            size++;
+            
+            w[size] = '\0';    
             T = addnode(T,w,1,&maxN); 
             size=0;    
             free(w);     
-            w = malloc(1);
+            w = malloc(2);
             wholeN++;           
         }   
     }
