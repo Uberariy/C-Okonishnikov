@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
     FILE *fin,*fout;
-    unsigned char utf8sym, bomle=1, suit=0;
+    unsigned char utf8sym, suit=0;
     int offset=0, next;
     unsigned short utf16sym;
 
@@ -24,35 +24,7 @@ int main(int argc, char *argv[])
     } 
     else fout = stdout;
 
-    if (next = fread(&utf8sym, sizeof(char), 1, fin))
-    {
-        if (utf8sym == 0xFF)
-        { 
-            if (next = fread(&utf8sym, sizeof(char), 1, fin))
-            {
-                if (utf8sym == 0xFE) 
-                {
-                    bomle=0; 
-                    next = fread(&utf8sym, sizeof(char), 1, fin);
-                }
-                else fprintf(stderr, "WARNING 1: No BOM is found!\n");
-            }
-        }
-        else if (utf8sym == 0xFE) 
-        {
-            if (next = fread(&utf8sym, sizeof(char), 1, fin))
-            {
-                if (utf8sym == 0xFF)
-                {
-                    next = fread(&utf8sym, sizeof(char), 1, fin);
-                }
-                else fprintf(stderr, "WARNING 1: No BOM is found!\n");
-            }
-        }
-        else fprintf(stderr, "WARNING 1: No BOM is found!\n");
-    }
-
-    while (next)
+    while (fread(&utf8sym, sizeof(char), 1, fin))
     {
         utf16sym=0;
         offset++;
@@ -106,21 +78,9 @@ int main(int argc, char *argv[])
         else fprintf(stderr, "\nERROR 5: Wrong character in %d byte!\n", offset);
         if (suit)
         {
-            if (bomle)
-            {
-                utf8sym = (char)utf16sym;
-                fwrite(&utf8sym, sizeof(utf8sym), 1, fout);
-                utf8sym = (char)(utf16sym >> 8);
-                fwrite(&utf8sym, sizeof(utf8sym), 1, fout);
-                suit = 0;
-            }
-            else
-            {
-                fwrite(&utf16sym, sizeof(utf16sym), 1, fout);
-                suit = 0;
-            }
-        } 
-        next = fread(&utf8sym, sizeof(char), 1, fin);
+            fwrite(&utf16sym, sizeof(utf16sym), 1, fout);
+            suit = 0;
+        }
     }
     
     printf("\n");
