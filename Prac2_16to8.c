@@ -10,16 +10,16 @@ int main(int argc, char *argv[])
     int bad2=2;
     unsigned short utf16sym;
 
-    if (argc == 2)
+    if (argc >= 2)
     {
-        if ((fin = fopen(*++argv, "r")) == NULL) 
+        if ((fin = fopen(argv[1], "r")) == NULL) 
             {fprintf(stderr, "ERROR 0: Unable to open input file\n"); return(1);}  
     } 
     else fin = stdin;
 
-    if (argc == 3)
+    if (argc >= 3)
     {
-        if ((fout = fopen(*++argv, "w")) == NULL) 
+        if ((fout = fopen(argv[2], "w")) == NULL) 
             {fprintf(stderr, "ERROR 0: Unable to open output file\n"); return(2);} 
     } 
     else fout = stdout;
