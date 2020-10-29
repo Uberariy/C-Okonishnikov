@@ -24,13 +24,14 @@ int main(int argc, char *argv[])
     } 
     else fout = stdout;
 
-    bad2 = fread(&utf16sym, 1, 2, fin);
+    bad2 = fread(&utf16sym, 2, 1, fin);
     if (utf16sym == 0xFFFE) bomle=0;
     if ((utf16sym != 0xFEFF) && (utf16sym != 0xFFFE))
     {
         fprintf(stderr, "ERROR 1: No BOM is found!\n");
     }
-    else bad2 = fread(&utf16sym, 1, 2, fin);
+    else bad2 = fread(&utf16sym, 2, 1, fin);
+    if (bad2 == 1) fprintf(stderr, "ERROR 2: Odd number of bytes!\n");
 
     while (bad2)
     {
@@ -74,7 +75,7 @@ int main(int argc, char *argv[])
             fputc(utf8sym2, fout);
             fputc(utf8sym3, fout);    
         }
-        bad2 = fread(&utf16sym, 1, 2, fin);
+        bad2 = fread(&utf16sym, 2, 1, fin);
     }
     if (bad2 == 1) fprintf(stderr, "ERROR 2: Odd number of bytes!\n");
     
