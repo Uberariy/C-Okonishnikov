@@ -56,11 +56,12 @@ int main(int argc, char *argv[])
 {
     struct list *curlist;          // List to determine maxsize of a word in a single cmd
     char *curpath, *curpathtmp, *curstr, *curpathelem;
-    char c;
+    char c, workroot='~';
 
     int sargc, curstrsize, curstrmax, curpathsize;
     int quotesflag, begincmd, endflag;                  // Flags for quotes in a command line; for start of cmd;
-    int i, j;                           // Counters
+    int tmpflag=1;                        // Minor flags
+    int i, j, k;                           // Counters
     char **sargv;                       // Argv of a cmd
 
     pid_t pid;
@@ -75,9 +76,10 @@ int main(int argc, char *argv[])
     {
         curstr = (char *)malloc(2);
 
-        printf("shell:~");
+        printf("shell:");
+        if (workroot != '1') putchar(workroot);
         printf("%s", curpath);
-        printf("$ ");
+        printf("$ %s");
 
         curlist=NULL;
         endflag=0; 
@@ -135,10 +137,6 @@ int main(int argc, char *argv[])
         for (i = 0; i<sargc; i++)
             listTOsargv (curlist, &(sargv[i]), i);
         sargv[sargc][0] = '\0';
-                                                    //printf("here sargc = %d  curstrmax = %d\n", sargc, curstrmax);
-        //for (i = 0; i<sargc; i++)
-        //printf("%s\t", sargv[i]);
-                                                    //printf("here sargc = %d  curstrmax = %d\n", sargc, curstrmax);
         if (strcmp(sargv[0], "exit") == 0)
         {
             endflag=1;
@@ -147,39 +145,47 @@ int main(int argc, char *argv[])
         {   
             if ((sargc==1) || (strcmp(sargv[1],"~") == 0))
             {
-                chdir("/");
+                chdir("~");
+                workroot = '~';
                 *curpath = '\0';
                 curpathsize = 2;
             }
             else if (chdir(sargv[1]) == 0)
             { 
-                curpathsize += curstrmax+2;
-                curpath = (char *)realloc(curpath, curpathsize);
-               // if (sargv[1][0] != '/')
-             //   {
-           //         strcat(curpath, "/");
-         //           strcat(curpath, sargv[1]);
-       //         }
-     //           else strcpy(curpath, sargv[1]);
-                for(i=0; ((i<=curstrmax+1) && (sargv[1][i] != '\0')); i++) //Тут остановился
+                curpathsize += curstrmax+2;                             //printf("curstrmax: %d\n", curstrmax);
+                curpath = (char *)realloc(curpath, curpathsize);        //printf("curpathsize: %d\n", curpathsize);
+                if (sargv[1][0] == '/') 
                 {
-                    strcat(curpath, "/");
+                    free(curpath);
+                    curpath = (char *)malloc(curpathsize); 
+                    curpath[0] = '\0';
+                    tmpflag = 0;
+                    if (sargv[1][1] == '\0') workroot = '/';
+                    else workroot = '1';
+                }
+                for(i=0; ((i<curstrmax+2) && (sargv[1][i] != '\0')); i++) 
+                {
                     j = 0;
                     curpathelem = (char *)malloc(curstrmax+2);
-                    while(sargv[1][i] != '/')
+                    while((sargv[1][i] != '/') && (sargv[1][i] != '\0'))
                     {
                         curpathelem[j] = sargv[1][i];
-                        i++; j++;
+                        i++; j++;                                       //printf("curpathelem: %s\n", curpathelem);
                     }
+                    curpathelem[j] = '\0';                              //printf("curpath: %s\n", curpath);
                     if (strcmp(curpathelem, "..") == 0)
-                    {
-                        for (i=0; curpath[i] != '\0' ; i++)
-                            if (curpath[i] == '/') j=i;  // Может привести к ошибкt стрката
-                        curpath[j] = '\0';
+                    {                                                   
+                        for (k=0; (curpath[k] != '\0'); k++)
+                            if (curpath[k] == '/') j=k;                 //printf("k %d   j %d\n", k, j); // Может привести к ошибкt стрката 
+                        for (; j<=k; j++)
+                        {
+                            curpath[j] = '\0';
+                        }
                     }
                     else 
                     {
-                        strcat(curpath, "/");
+                        if (tmpflag) strcat(curpath, "/");
+                        else tmpflag = 1;
                         strcat(curpath, curpathelem);
                     }
                     free(curpathelem);
