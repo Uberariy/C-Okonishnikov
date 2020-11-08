@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -131,12 +132,12 @@ int main(int argc, char *argv[])
         if (endflag) break;
 
         sargv = (char **)malloc((sargc+1)*(sizeof(char *)));         // Create Dynamic memory for argv
-        for (i = 0; i<=sargc; i++)
+        for (i = 0; i<sargc; i++)
             sargv[i] = (char *)malloc(curstrmax+2);
                                                     //printf("here sargc = %d  curstrmax = %d\n", sargc, curstrmax);
         for (i = 0; i<sargc; i++)
             listTOsargv (curlist, &(sargv[i]), i);
-        sargv[sargc][0] = '\0';
+        sargv[sargc] = NULL;
         if (strcmp(sargv[0], "exit") == 0)
         {
             endflag=1;
@@ -193,24 +194,28 @@ int main(int argc, char *argv[])
             }
             else 
             {
-                fprintf(stderr, "cd: %s: Not such file of directory\n", sargv[1]);
+                fprintf(stderr, "cd: %s: Not such file or directory\n", sargv[1]);
             }
         }
         else 
         {   
             if (fork() == 0)
             {
-                execv(sargv[0], sargv);
+                execvp(sargv[0], sargv);
                 fprintf(stderr, "%s: command not found\n", sargv[0]);
                 exit('R');
             }
             else
             {
-                pid = wait(NULL);
+                int stat;
+                pid = wait(&stat);
+                if (WIFEXITED(stat) == 0)
+                    if (WEXITSTATUS(stat) != 'R')
+                        fprintf(stderr, "%s: exited with error\n", sargv[0]);
             }
         }
 
-        for (i = 0; i<=sargc; i++)               // Clear Dynamic memory for argv
+        for (i = 0; i<sargc; i++)               // Clear Dynamic memory for argv
             free(sargv[i]);
         free(sargv);
 
