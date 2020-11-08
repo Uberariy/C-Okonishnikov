@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
         printf("shell:");
         if (workroot != '1') putchar(workroot);
         printf("%s", curpath);
-        printf("$ %s");
+        printf("$ ");
 
         curlist=NULL;
         endflag=0; 
