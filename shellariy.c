@@ -55,22 +55,25 @@ void freelist (struct list *L)
 int main(int argc, char *argv[])
 {
     struct list *curlist;          // List to determine maxsize of a word in a single cmd
-    char *curpath, *curstr;
+    char *curpath, *curpathtmp, *curstr, *curpathelem;
     char c;
 
-    int sargc, curstrsize, curstrmax;
+    int sargc, curstrsize, curstrmax, curpathsize;
     int quotesflag, begincmd, endflag;                  // Flags for quotes in a command line; for start of cmd;
     int i, j;                           // Counters
     char **sargv;                       // Argv of a cmd
 
     pid_t pid;
 
+    curpathsize = 2;
+    curpath = (char *)malloc(2);
+    //curpathtmp = (char *)malloc(2);
+    *curpath = '\0';
+    //*curpathtmp = '\0';
+
     while(1)
     {
-        curpath = (char *)malloc(2);
         curstr = (char *)malloc(2);
-
-        *curpath = '\0';
 
         printf("shell:~");
         printf("%s", curpath);
@@ -94,7 +97,7 @@ int main(int argc, char *argv[])
                 }
 
             curstrsize = 0;
-            while (((c != ' ') && (c != '\t') && (c != '\n')) || (quotesflag))
+            while (((c != ' ') && (c != '\t') && (c != '\n') && (c != EOF)) || (quotesflag))
             {
                 begincmd = 0;
                 if (c=='"')
@@ -141,16 +144,58 @@ int main(int argc, char *argv[])
             endflag=1;
         }
         else if (strcmp(sargv[0], "cd") == 0)
-        {
-            ;
+        {   
+            if ((sargc==1) || (strcmp(sargv[1],"~") == 0))
+            {
+                chdir("/");
+                *curpath = '\0';
+                curpathsize = 2;
+            }
+            else if (chdir(sargv[1]) == 0)
+            { 
+                curpathsize += curstrmax+2;
+                curpath = (char *)realloc(curpath, curpathsize);
+               // if (sargv[1][0] != '/')
+             //   {
+           //         strcat(curpath, "/");
+         //           strcat(curpath, sargv[1]);
+       //         }
+     //           else strcpy(curpath, sargv[1]);
+                for(i=0; ((i<=curstrmax+1) && (sargv[1][i] != '\0')); i++) //Тут остановился
+                {
+                    strcat(curpath, "/");
+                    j = 0;
+                    curpathelem = (char *)malloc(curstrmax+2);
+                    while(sargv[1][i] != '/')
+                    {
+                        curpathelem[j] = sargv[1][i];
+                        i++; j++;
+                    }
+                    if (strcmp(curpathelem, "..") == 0)
+                    {
+                        for (i=0; curpath[i] != '\0' ; i++)
+                            if (curpath[i] == '/') j=i;  // Может привести к ошибкt стрката
+                        curpath[j] = '\0';
+                    }
+                    else 
+                    {
+                        strcat(curpath, "/");
+                        strcat(curpath, curpathelem);
+                    }
+                    free(curpathelem);
+                }                
+            }
+            else 
+            {
+                fprintf(stderr, "cd: %s: Not such file of directory\n", sargv[1]);
+            }
         }
         else 
         {   
             if (fork() == 0)
             {
                 execv(sargv[0], sargv);
-                printf("%s: command not found\n", sargv[0]);
-                perror("exec");
+                fprintf(stderr, "%s: command not found\n", sargv[0]);
                 exit('R');
             }
             else
@@ -164,11 +209,10 @@ int main(int argc, char *argv[])
         free(sargv);
 
         freelist(curlist);                      // Clear Dynamic memory for curlist
-        free(curpath);
 
         if (endflag) break;
     }
 
-
+    free(curpath);
     return(0);
 }
