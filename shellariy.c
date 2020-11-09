@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
         {   
             if ((sargc==1) || (strcmp(sargv[1],"~") == 0))
             {
-                chdir("~");
+                chdir(getenv("HOME"));
                 workroot = '~';
                 *curpath = '\0';
                 curpathsize = 2;
