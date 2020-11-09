@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
                     if (sargv[1][1] == '\0') workroot = '/';
                     else workroot = '1';
                 }
-                for(i=0; ((i<curstrmax+2) && (sargv[1][i] != '\0')); i++) 
+                for(i=0; ((i<curstrmax) && (sargv[1][i] != '\0')); i++) 
                 {
                     j = 0;
                     curpathelem = (char *)malloc(curstrmax+2);
