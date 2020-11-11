@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
                 }
 
             curstrsize = 0;
-            while (((c != ' ') && (c != '\t') && (c != '\n') && (c != EOF)) || (quotesflag))
+            while ((((c != ' ') && (c != '\t') && (c != EOF)) || (quotesflag)) && (c != '\n'))
             {
                 begincmd = 0;
                 if (c=='"')
