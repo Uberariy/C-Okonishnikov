@@ -137,8 +137,10 @@ int main(int argc, char *argv[])
                                                     //printf("here sargc = %d  curstrmax = %d\n", sargc, curstrmax);
         for (i = 0; i<sargc; i++)
             listTOsargv (curlist, &(sargv[i]), i);
-        sargv[sargc] = NULL;
-        if (strcmp(sargv[0], "exit") == 0)
+        sargv[sargc] = NULL;                       //printf("1 here sargc = %d  curstrmax = %d sargv[0] = %s\n", sargc, curstrmax, sargv[0]);
+
+        if (sargc == 0) ;
+        else if (strcmp(sargv[0], "exit") == 0)
         {
             endflag=1;
         }
@@ -197,7 +199,7 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "cd: %s: Not such file or directory\n", sargv[1]);
             }
         }
-        else 
+        else
         {   
             if (fork() == 0)
             {
@@ -214,7 +216,7 @@ int main(int argc, char *argv[])
                         fprintf(stderr, "%s: exited with error\n", sargv[0]);
             }
         }
-
+                                                    //printf("here sargc = %d  curstrmax = %d\n", sargc, curstrmax);
         for (i = 0; i<sargc; i++)               // Clear Dynamic memory for argv
             free(sargv[i]);
         free(sargv);
