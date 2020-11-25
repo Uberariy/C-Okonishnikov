@@ -10,6 +10,12 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#define RED "\x1b[31m"
+#define WHITE "\x1b[38m"
+#define PURPLE "\x1b[38;2;253;159;197m"
+#define COLORENDS "\x1b[0m"
+#define BACKGROUND_RED "\x1b[48;2;110;20;12m"
+
 struct list
 {
     char* word;
@@ -91,7 +97,8 @@ int ifistoken (char c)
 
 void assemblyline (char ***sargv, char **stokenv, int stokenc)
 {
-    int i=0, pid, fd[2], prev=0;
+    #include <fcntl.h>
+    int i=0, j=0, pid, fd[2], prev=0, fd1;
     while (i<=stokenc)
     {
         if ((i==stokenc) || (strcmp(stokenv[i], "|") == 0))
@@ -106,17 +113,41 @@ void assemblyline (char ***sargv, char **stokenv, int stokenc)
                     if (i!=stokenc)
                         dup2(fd[1], 1);
                     close(fd[0]);   close(fd[1]);
+                    for (j=prev; ((j<stokenc) && (strcmp(stokenv[j], "|") != 0)); j++)
+                    {                                                       //fprintf(stderr, "|%d|", j);
+                        if (strcmp(stokenv[j], "<") == 0)
+                        {
+                            fd1 = open(sargv[j+1][0], O_RDONLY);            //fprintf(stderr, "*%s*", sargv[j+1][0]);
+                            if (fd1 < 0) fprintf(stderr, BACKGROUND_RED "%s: No such file or directory" COLORENDS "\n", sargv[j+1][0]);
+                            else { dup2(fd1, 0);   close(fd1); }
+                        }
+                        else if (strcmp(stokenv[j], ">") == 0)
+                        {
+                            fd1 = open(sargv[j+1][0], O_WRONLY | O_CREAT | O_TRUNC, 0777);
+                            if (fd1 < 0) fprintf(stderr, BACKGROUND_RED "%s: No such file or directory" COLORENDS "\n", sargv[j+1][0]);
+                            else {  dup2(fd1, 1);   close(fd1); }
+                        }
+                        else if (strcmp(stokenv[j], ">>") == 0)
+                        {
+                            fd1 = open(sargv[j+1][0], O_WRONLY | O_APPEND, 0777);
+                            if (fd1 < 0) fprintf(stderr, BACKGROUND_RED "%s: No such file or directory" COLORENDS "\n", sargv[j+1][0]);
+                            else {  dup2(fd1, 1);   close(fd1); }
+                        }
+                        else fprintf(stderr, BACKGROUND_RED "HAL9000: syntax error near unexpected token '%s'" COLORENDS "\n", sargv[j+1][0]);
+                    }
                     execvp(sargv[prev][0], sargv[prev]);
-                    fprintf(stderr, "%s: command not found\n", sargv[prev][0]);
+                    fprintf(stderr, BACKGROUND_RED "%s: command not found" COLORENDS "\n", sargv[prev][0]);
                     exit(1);
             }
             dup2(fd[0], 0);
             close(fd[0]);   close(fd[1]);
             prev=i+1;
+    
         }
         i++;
     }
     while(wait(NULL) != -1) ;
+    return;
 }
 
 int main(int argc, char *argv[])
@@ -129,7 +160,7 @@ int main(int argc, char *argv[])
     int sargc, stokenc, curstrsize, strmax, curpathsize;
     int quotesflag, begincmd, endflag, nextflag, readprev, tokenflag;                  // Flags for quotes in a command line; for start of cmd;
     int tmpflag=1;                        // Minor flags
-    int i, j, k;                           // Counters
+    int i, j, k, fd1;                           // Counters
     char **stokenv; 
     char ***sargv;                      // Argv of a cmd
 
@@ -143,9 +174,9 @@ int main(int argc, char *argv[])
     {
         curstr = (char *)malloc(2);
 
-        printf("%s", shellname);
+        printf(RED "%s" COLORENDS PURPLE, shellname);
         if (workroot != '1') putchar(workroot);
-        printf("%s", curpath);
+        printf("%s" COLORENDS, curpath);
         printf("$ ");
 
         readprev=1;
@@ -178,7 +209,7 @@ int main(int argc, char *argv[])
                 if (tokenflag || begincmd)
                 {
                     nextflag=1;
-                    printf("%s syntax error near unexpected token '%c'\n", shellname, c);
+                    fprintf(stderr, BACKGROUND_RED "%s syntax error near unexpected token '%c'" COLORENDS "\n", shellname, c);
                 }
                 while (ifistoken(c))   // Token input
                 {
@@ -271,7 +302,8 @@ int main(int argc, char *argv[])
             i++;
         }
 
-        if ((sargv[stokenc][0] == NULL) && (stokenc>0)) printf("%s syntax error near one of unexpected token\n", shellname);
+        if ((sargv[stokenc][0] == NULL) && (stokenc>0)) 
+            fprintf(stderr, BACKGROUND_RED "%s syntax error near one of unexpected token" COLORENDS "\n", shellname);
         else
         if (multiple) 
         {
@@ -280,7 +312,7 @@ int main(int argc, char *argv[])
                 assemblyline(sargv, stokenv, stokenc);
                 return(0);
             }
-            else wait(NULL);
+            else while(wait(NULL) != -1) ;
         }
         else 
         {
@@ -341,15 +373,37 @@ int main(int argc, char *argv[])
                 }
                 else 
                 {
-                    fprintf(stderr, "cd: %s: Not such file or directory\n", sargv[0][1]);
+                    fprintf(stderr, BACKGROUND_RED "cd: %s: Not such file or directory" COLORENDS "\n", sargv[0][1]);
                 }
             }
             else
             {   
                 if ((pid = fork()) == 0)
-                {
+                {        
+                    for (j=0; j < stokenc; j++)
+                    {           //fprintf(stderr, "|%d|", j);
+                        if (strcmp(stokenv[j], "<") == 0)
+                        {
+                            fd1 = open(sargv[j+1][0], O_RDONLY);    //fprintf(stderr, "*%s*", sargv[j+1][0]);
+                            if (fd1 < 0) fprintf(stderr, BACKGROUND_RED "%s: No such file or directory" COLORENDS "\n", sargv[j+1][0]);
+                            else {  dup2(fd1, 0);   close(fd1); }
+                        }
+                        else if (strcmp(stokenv[j], ">") == 0)
+                        {
+                            fd1 = open(sargv[j+1][0], O_WRONLY | O_CREAT | O_TRUNC, 0777);
+                            if (fd1 < 0) fprintf(stderr, BACKGROUND_RED "%s: No such file or directory" COLORENDS "\n", sargv[j+1][0]);
+                            else {  dup2(fd1, 1);   close(fd1); }
+                        }
+                        else if (strcmp(stokenv[j], ">>") == 0)
+                        {
+                            fd1 = open(sargv[j+1][0], O_WRONLY | O_APPEND, 0777);
+                            if (fd1 < 0) fprintf(stderr, "%s: No such file or directory" COLORENDS "\n", sargv[j+1][0]);
+                            else {  dup2(fd1, 1);   close(fd1); }
+                        }
+                        else fprintf(stderr, BACKGROUND_RED "%s syntax error near unexpected token '%s'" COLORENDS "\n", shellname, sargv[j+1][0]);
+                    }
                     execvp(sargv[0][0], sargv[0]);
-                    fprintf(stderr, "%s: command not found\n", sargv[0][0]);
+                    fprintf(stderr, BACKGROUND_RED "%s: command not found" COLORENDS "\n", sargv[0][0]);
                     exit(1);
                 }
                 else if (pid == -1)
@@ -363,7 +417,7 @@ int main(int argc, char *argv[])
                     wait(&stat);
                     if (WIFEXITED(stat) == 0)
                     if (WEXITSTATUS(stat) != 1)
-                    fprintf(stderr, "%s: exited with error\n", sargv[0][0]);
+                    fprintf(stderr, BACKGROUND_RED "%s: exited with error" COLORENDS "\n", sargv[0][0]);
                 }
             }
         }   
