@@ -48,7 +48,7 @@ int main(int argc, char **argv)
             else
             {
                 while ((read(0, s, 1)) != 0)
-                {
+                {   // Проверял программу, вводя символы со стандартного ввода, поэтому чтение и обработка такие
                     if (!isspace(s[0]))
                         c=c*10+atoi(s);
                     else {if (c % i == 0) sum+=c; c=0;}
