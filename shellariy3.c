@@ -600,6 +600,6 @@ int main(int argc, char *argv[])
 
     free(pidarray);
     free(curpath);
-    printf("SHELL ENDS\n");
+    printf("HAL DIES\n");
     return(0);
 }
