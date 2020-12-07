@@ -283,13 +283,6 @@ int insidecmd(char ***sargv, int sargc, int strmax)
     return(0);
 }
 
-void SigHndlr (int s)
-{
-    if (shellpid == getpid())
-        signal(SIGINT, SigHndlr);
-    else kill(0, SIGINT);
-}
-
 int main(int argc, char *argv[])
 {
     struct list *curlist;          // List to determine maxsize of a word in a single cmd
@@ -316,7 +309,7 @@ int main(int argc, char *argv[])
     *curpath = '\0';
 
     shellpid = getpid(); 
-    signal(SIGINT, SigHndlr);
+    signal(SIGINT, SIG_IGN);
 
     while(1)
     {
@@ -409,12 +402,6 @@ int main(int argc, char *argv[])
         if (curstr != NULL) free(curstr);
         if (endflag) 
         {
-            for (i = 1; i <= pidarraymax; i++)
-                if (pidarray[i] > 0) 
-                {
-                    kill(pidarray[i], SIGKILL);
-                    printf("[%d] Process %d killed!!\n", i, pidarray[i]);
-                }
             kill(0, SIGINT);
             break;
         }
@@ -476,6 +463,7 @@ int main(int argc, char *argv[])
             insidecmd(sargv, sargc, strmax);
         else if ((pid2 = fork()) == 0) 
         {
+            if (!background) signal(SIGINT, SIG_DFL); else signal(SIGINT, SIG_IGN);
             if (multiple) 
             {
                 assemblyline(sargv, stokenv, stokenc);
@@ -541,7 +529,7 @@ int main(int argc, char *argv[])
             else 
             {
                 if (++pidarraynum > pidarraymax) 
-                {   pidarraymax = pidarraynum;  pidarray = (pid_t *)realloc(pidarray, pidarraymax + 2); }
+                {   pidarraymax = pidarraynum;  pidarray = (pid_t *)realloc(pidarray, sizeof(pid_t)*(pidarraymax + 2)); }
                 pidarray[pidarraynum] = -7;
                 for (i=1; pidarray[i] != -7; i++);
                 pidarray[i] = pid2;
@@ -550,7 +538,7 @@ int main(int argc, char *argv[])
 
 
         // Анализ Фоновых процессов
-        for (i = 1; i <= pidarraymax; i++)
+        for (i = 1; i <= pidarraynum; i++)
         {
             j = waitpid(pidarray[i], &stat, WNOHANG);           //printf("|HERE!! i: %d, stat: %d, pid_t: %d, j: %d|\n", i, stat, pidarray[i], j);
             if (WEXITSTATUS(stat) != 1) stat = WEXITSTATUS(stat);       //printf("\t{%d{{%d{\t", stat, WEXITSTATUS(stat));
@@ -559,10 +547,10 @@ int main(int argc, char *argv[])
                 if ((WIFEXITED(stat) == 0) || (WEXITSTATUS(stat) != 0))
                 { 
                     if (WEXITSTATUS(stat) != 1)
-                        fprintf(stderr, "[%d]   Exit %d (Program error)\n", i, stat);
-                    else fprintf(stderr, "[%d]   Exit 127 (Command not found)\n", i);
+                        fprintf(stderr, "[%d] (%d)   Exit %d\n", i, pidarray[i], stat);
+                    else fprintf(stderr, "[%d] (%d)   Exit 127 (Command not found)\n", i, pidarray[i]);
                 }
-                else fprintf(stderr, "[%d]   Done\n", i);
+                else fprintf(stderr, "[%d] (%d)   Done\n", i, pidarray[i]);
                 pidarray[i]=-7;
                 pidarraynum--;
             }
@@ -587,12 +575,6 @@ int main(int argc, char *argv[])
 
         if (endflag) 
         {
-            for (i = 1; i <= pidarraymax; i++)
-                if (pidarray[i] > 0) 
-                {
-                    kill(pidarray[i], SIGKILL);
-                    printf("[%d] Process %d killed!!\n", i, pidarray[i]);
-                }
             kill(0, SIGINT);
             break;
         }
@@ -600,6 +582,6 @@ int main(int argc, char *argv[])
 
     free(pidarray);
     free(curpath);
-    printf("HAL DIES\n");
+    printf(BACKGROUND_RED "[HAL DIES]" COLORENDS "\n");
     return(0);
 }
