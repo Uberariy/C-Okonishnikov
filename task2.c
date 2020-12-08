@@ -11,7 +11,7 @@
 int main(int argc, char *argv[])
 {
     pid_t pid, p;
-    int i, j, fd1, stat, N;
+    int i, j, fd1, stat, N, k;
     int fd[2];
     char **sargv;
 
@@ -23,14 +23,14 @@ int main(int argc, char *argv[])
     sargv[0] = (char *)malloc((6)*(sizeof(char)));
     strcpy(sargv[0], "echo");
 
-    for (i = 1; i<=N+1; i++)
+    for (i = 1; i<=N; i++)
     {
-        sargv[i] = (char *)malloc(sizeof(char)*2);
+        sargv[i] = (char *)malloc(sizeof(char)*(N/10+3));
     }
     for (i = 1; i<=N; i++)
     {
-        sargv[i][0] = (char)i;
-        sargv[i][1] = '\0';
+        k=i;
+        sprintf(sargv[i], "%d", i);
     }
     sargv[N+1] = NULL;
 
