@@ -14,18 +14,18 @@ int j, i, notblock, start;
 void SigHndlr (int sig)
 {
     if (pid == getpid())
-    {   //fprintf(stderr, "dad");
+    {
         if (!start) kill(pidarray[j], SIGUSR1);
         j = (j+1) % 3;
         kill(pidarray[j], SIGUSR1);
         start=0;
-    }   //fprintf(stderr, "son");
+    }
     signal(SIGINT, SigHndlr);
 }
 
 void SigUsr(int sig)
 {
-    notblock = (notblock+1) % 2;    //fprintf(stderr, "%d\t", notblock);
+    notblock = (notblock+1) % 2;
     signal(SIGUSR1, SigUsr);
 }
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     {
         if ((p = fork()) == 0)
         {
-            p2 = getpid();  //printf("My PID: %d\n", p2);
+            p2 = getpid();
             while(1)
             {
                 if (notblock)
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
             }
             exit(0);
         }
-        pidarray[i] = p;        //printf("His PID: %d\n", pidarray[i]);
+        pidarray[i] = p;
     }
     alarm(10);
     while(1) pause();
